@@ -1,0 +1,25 @@
+{
+  "name": "platt-partners",
+  "description": "Internal CRM dashboard + AI-assisted recruiting automation + rebuilt marketing site for Platt Partners",
+  "repository": "https://github.com/ryanhood10/PlattPartners",
+  "stack": "heroku-24",
+  "buildpacks": [
+    { "url": "heroku/nodejs" }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "env": {
+    "NODE_ENV": { "value": "production" },
+    "NEXTAUTH_URL": { "required": true, "description": "https://<your-app>.herokuapp.com or https://plattpartners.com" },
+    "NEXTAUTH_SECRET": { "required": true, "description": "openssl rand -base64 32" },
+    "MONGODB_URI": { "required": true },
+    "MS_TENANT_ID": { "required": true },
+    "MS_CLIENT_ID": { "required": true },
+    "MS_CLIENT_SECRET": { "required": true }
+  },
+  "scripts": {}
+}
