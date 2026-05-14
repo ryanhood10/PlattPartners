@@ -2,14 +2,23 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  // Migration redirects from the old WP site live here once Peter confirms canonical URLs.
-  // See docs/build_plan.md Phase 1.
+
+  // 301 redirects to preserve SEO during the WP → Next migration.
+  // Every URL Yoast had in plattpartners.com/page-sitemap.xml is either
+  // served at the same path on our stack, or 301'd here.
+  // See docs/build_plan.md Phase 1 + docs/decisions.md.
   async redirects() {
     return [
-      // Example shape — fill in during Phase 1 cutover:
-      // { source: '/old-wp-path', destination: '/new-path', permanent: true },
+      // /about-services is now /about. Keep both slash variants explicit.
+      { source: '/about-services', destination: '/about', permanent: true },
+      { source: '/about-services/', destination: '/about', permanent: true },
+      // The Beaver Builder global header template — never user-facing,
+      // but Yoast listed it. Send it home.
+      { source: '/header', destination: '/', permanent: true },
+      { source: '/header/', destination: '/', permanent: true },
     ];
   },
+
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'plattpartners.com' },
