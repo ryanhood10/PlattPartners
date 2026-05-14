@@ -20,7 +20,7 @@ export function SiteHeader() {
           <Link href="/#platt-partner-services" className="text-sm font-medium hover:text-platt-primary">
             Services
           </Link>
-          <Link href="/#about-peter-platt-partners" className="text-sm font-medium hover:text-platt-primary">
+          <Link href="/about" className="text-sm font-medium hover:text-platt-primary">
             About
           </Link>
           <Link href="/technology" className="text-sm font-medium hover:text-platt-primary">
@@ -34,7 +34,7 @@ export function SiteHeader() {
           </a>
         </nav>
         <Button asChild>
-          <Link href="/#contact-platt-partners">Let&apos;s Talk</Link>
+          <Link href="/contact">Let&apos;s Talk</Link>
         </Button>
       </div>
     </header>

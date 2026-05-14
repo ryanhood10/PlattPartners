@@ -58,8 +58,13 @@ export function SiteFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/#about-peter-platt-partners" className="hover:text-platt-primary">
+                <Link href="/about" className="hover:text-platt-primary">
                   About
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="hover:text-platt-primary">
+                  Contact
                 </Link>
               </li>
               <li>
