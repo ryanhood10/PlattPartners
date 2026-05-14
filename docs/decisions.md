@@ -147,6 +147,19 @@ If a decision is reversed later, append a new entry referencing the old one — 
 
 ---
 
+## 2026-05-14 — First production deploy
+
+**Decision:** Heroku app `platt-partners` created in US region on heroku-24 stack with Basic dyno. Initial deploy live at https://platt-partners-3b59df8c6202.herokuapp.com. Build pipeline (npm install → next build → next start) verified end-to-end.
+
+**Rationale:** Validates the Heroku-only deployment story before any real feature work lands. Gives Ryan a public URL to A/B against the current WordPress site visually. Custom domain (plattpartners.com) deferred until Peter's DNS access lands.
+
+**Approved by:** Ryan, 2026-05-14
+**Reversible?:** Yes (`heroku apps:destroy platt-partners`)
+
+See `docs/runbooks/heroku-deploy.md` for the full runbook.
+
+---
+
 ## Open decisions (need Peter input — landed in docs/blockers.md)
 
 - Canonical verticals: site says "tech, financial services, fast casual dining"; handoff says "restaurant ops, tech, IT, construction." Need Peter to pick.
