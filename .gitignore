@@ -1,0 +1,79 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+.yarn/
+
+# Next.js
+.next/
+out/
+*.tsbuildinfo
+
+# Build outputs
+dist/
+build/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Secrets
+secrets/
+*.pem
+*.key
+*.p12
+
+# Knowledge — never commit PII or voice corpus
+knowledge/candidates/*
+!knowledge/candidates/.gitkeep
+!knowledge/candidates/_template.md
+knowledge/emails-voice-corpus/*
+!knowledge/emails-voice-corpus/.gitkeep
+!knowledge/emails-voice-corpus/README.md
+knowledge/analytics-snapshots/*
+!knowledge/analytics-snapshots/.gitkeep
+
+# Original handoff archive (kept locally as historical reference, not in repo)
+handoff/
+
+# Site research (Phase 0 working state; keep tracked so other agents can read it,
+# but mark _research/scratch/ for any throwaway work)
+_research/scratch/
+
+# Test artifacts
+coverage/
+.nyc_output/
+
+# Cache
+.cache/
+.turbo/
+.parcel-cache/
+
+# OS
+Thumbs.db
+desktop.ini
+
+# Heroku
+.heroku/
+
+# Local dev
+.local/
+tmp/
+temp/
