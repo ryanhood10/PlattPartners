@@ -147,6 +147,21 @@ If a decision is reversed later, append a new entry referencing the old one — 
 
 ---
 
+## 2026-05-15 — Ship the AI assistant with context-stuffing, defer the vector DB
+
+**Decision:** The internal assistant at `/app/assistant` works today by stuffing the entire `knowledge/wiki/` + `knowledge/brand/` markdown corpus (~10K tokens) into Claude Sonnet 4.6's system prompt on every call. Anthropic prompt caching makes this cheap (~$0.005/call after the first). No Pinecone or Atlas Vector Search yet.
+
+**Alternatives considered:**
+- **Build RAG now (Pinecone + Voyage embeddings)** — the original Phase 4 plan. Rejected because: (a) the corpus fits in the context window 8x over today, (b) every chunk-retrieval system loses some answer quality versus full-context, (c) it adds an external vendor + an indexing pipeline + a re-embed-on-change flow to maintain. Premature complexity for our scale.
+- **Build a custom file-based retrieval over markdown** — keyword search across the wiki files. Rejected — Claude with full context is strictly better at understanding intent than keyword match.
+
+**Rationale:** Context-stuffing is the right tool when the corpus is small. Claude's 200K window + prompt caching makes it economical. The threshold to revisit is ~100K-token corpus OR per-call latency >3 seconds OR per-call cost >$0.10. None of those is close.
+
+**Approved by:** Ryan, 2026-05-15
+**Reversible?:** Yes — when we add RAG later, the assistant interface (`/api/assistant/ask`) doesn't change; only the system-prompt-building strategy in `lib/knowledge.ts` does. No client-side migration.
+
+---
+
 ## 2026-05-14 — First production deploy
 
 **Decision:** Heroku app `platt-partners` created in US region on heroku-24 stack with Basic dyno. Initial deploy live at https://platt-partners-3b59df8c6202.herokuapp.com. Build pipeline (npm install → next build → next start) verified end-to-end.
