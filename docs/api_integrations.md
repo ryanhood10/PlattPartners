@@ -200,22 +200,26 @@ After Phase 1 cutover, this section becomes historical reference.
 
 ## API integration status tracker
 
-Update as credentials and integrations come online.
+**Last reconciled:** 2026-05-14. Update as credentials and integrations come online.
 
-| Integration | Credential Received | Test Connection Works | In Production |
-|---|---|---|---|
-| LinkedIn Recruiter (manual) | ☐ | n/a | n/a |
-| Apollo.io API | ☐ | ☐ | ☐ |
-| MS Graph (Entra registration) | ☐ | ☐ | ☐ |
-| Anthropic API | ☐ | ☐ | ☐ |
-| Gemini API | ☐ | ☐ | ☐ |
-| Voyage API | ☐ | ☐ | ☐ |
-| Pinecone OR Atlas Vector | ☐ | ☐ | ☐ |
-| GA4 Data API | ☐ | ☐ | ☐ |
-| Search Console API | ☐ | ☐ | ☐ |
-| Cloudinary | ☐ | ☐ | ☐ |
-| Slack webhook | ☐ | ☐ | ☐ |
-| Upstash | ☐ | ☐ | ☐ |
-| Backblaze B2 | ☐ | ☐ | ☐ |
-| WordPress (content read) | ☐ | ☐ | n/a — one-time |
-| DNS registrar (for cutover) | ☐ | n/a | ☐ |
+| Integration | Code wired | Credentials in Heroku | Live in production | Phase |
+|---|---|---|---|---|
+| LinkedIn Recruiter (manual) | n/a | n/a | n/a | 2 |
+| Apollo.io API | ☐ | ☐ | ☐ | 2 |
+| MS Graph (Entra registration) | ✅ NextAuth provider wired | ☐ needs `MS_*` from Peter | ☐ | 0 (login), 3 (mail) |
+| Anthropic API | ☐ | ☐ | ☐ | 3 |
+| Gemini API | ☐ | ☐ | ☐ | 4 |
+| Voyage API | ☐ | ☐ | ☐ | 4 |
+| Pinecone OR Atlas Vector | ☐ | ☐ | ☐ | 4 |
+| GA4 Data API | ☐ | ☐ | ☐ | 6 |
+| Search Console API | ☐ | ☐ | ☐ | 6 |
+| Cloudinary | ☐ | ☐ | ☐ | 1 |
+| Slack webhook | ☐ | ☐ | ☐ | 3 |
+| Upstash | ☐ | ☐ | ☐ | 4 |
+| Backblaze B2 | ☐ | ☐ | ☐ | 6 |
+| WordPress (content read) | ✅ done via WebFetch | n/a | n/a — one-time | 0 |
+| DNS registrar (for cutover) | ☐ needs Peter | n/a | ☐ | 1 |
+| MongoDB Atlas | ✅ Mongoose models + `lib/db.ts` | ☐ needs cluster + URI | ☐ | 0 |
+| Heroku app + Config Vars | ✅ | ✅ NEXTAUTH_*, JOB_RUNNER_SECRET set | ✅ Live at `platt-partners-3b59df8c6202.herokuapp.com` | 0 |
+
+Legend: ✅ done, ☐ not yet

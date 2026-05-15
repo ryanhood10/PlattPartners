@@ -1,6 +1,8 @@
 # Architecture
 
-How the Platt Partners system is wired. See `decisions.md` for the *why* behind each choice; this doc is the *how*.
+How the Platt Partners system is actually wired. See `decisions.md` for the *why* behind each choice; `build_plan.md` for what's still to come; this is the *how* of what's shipped today.
+
+**Last reconciled:** 2026-05-14
 
 ---
 
@@ -8,14 +10,15 @@ How the Platt Partners system is wired. See `decisions.md` for the *why* behind 
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│  plattpartners.com  +  app.plattpartners.com (same Next.js app)      │
+│  plattpartners.com  (post-cutover)  +  current: platt-partners-...   │
+│  -3b59df8c6202.herokuapp.com                                         │
 │                                                                       │
 │   Public marketing pages       │   Authenticated dashboard            │
 │   (SSR/SSG, SEO-optimized)     │   (Microsoft Entra OAuth)            │
-│   /, /technology, /restaurants │   /app/pipeline, /app/clients,       │
-│   /it-leadership, /about,      │   /app/inbox, /app/outreach,         │
-│   /case-studies, /blog,        │   /app/bd, /app/analytics,           │
-│   /contact + public AI widget  │   /app/assistant, /app/settings      │
+│   /, /about, /technology,      │   /app/pipeline, /app/clients,       │
+│   /contact, /privacy-policy,   │   /app/inbox, /app/outreach,         │
+│   /how-to-build-...            │   /app/bd, /app/analytics,           │
+│   /sitemap.xml, /robots.txt    │   /app/assistant, /app/settings      │
 └──────────────────────────────────────────────────────────────────────┘
                           │
                           │  Next.js API routes (/api/*)
@@ -23,20 +26,18 @@ How the Platt Partners system is wired. See `decisions.md` for the *why* behind 
 ┌──────────────────────────────────────────────────────────────────────┐
 │  pages/api/*  —  Express-shaped routes inside Next.js                │
 │                                                                       │
-│   /api/auth/*           NextAuth (Microsoft Entra)                   │
-│   /api/health           Unauth health check                          │
-│   /api/public/ask       Rate-limited public AI widget                │
-│   /api/candidates       Candidate CRUD                                │
-│   /api/clients          Client CRUD                                   │
-│   /api/pipeline         Pipeline state transitions                    │
-│   /api/outreach         Draft queue, approve, send                    │
-│   /api/inbox            M365 inbox proxy                              │
-│   /api/bd               BD signals + briefs                           │
-│   /api/analytics        Daily snapshot, weekly reports                │
-│   /api/assistant        Internal AI assistant (authed, full scope)    │
-│   /api/webhooks/msgraph M365 mail webhook                             │
-│   /api/webhooks/onedrive OneDrive CSV-drop webhook                    │
-│   /api/jobs/*           Heroku Scheduler endpoints (auth via header)  │
+│   Live today:                                                         │
+│   /api/health           Unauthenticated, returns JSON ok              │
+│   /api/auth/[...nextauth]  NextAuth + Microsoft Entra (stubbed,       │
+│                            needs MS_CLIENT_ID/SECRET to function)     │
+│   /api/public/contact   Zod-validated, persists to Mongo when         │
+│                         MONGODB_URI is set; logs only otherwise.      │
+│                                                                       │
+│   Planned (Phase 2-5):                                                │
+│   /api/candidates, /api/clients, /api/pipeline, /api/outreach,        │
+│   /api/inbox, /api/bd, /api/analytics, /api/assistant/ask,            │
+│   /api/public/ask, /api/webhooks/msgraph, /api/webhooks/onedrive,     │
+│   /api/jobs/<name>                                                    │
 └──────────────────────────────────────────────────────────────────────┘
                           │
         ┌─────────────────┼──────────────────┐
@@ -44,21 +45,103 @@ How the Platt Partners system is wired. See `decisions.md` for the *why* behind 
         ▼                 ▼                  ▼
 ┌────────────────┐  ┌──────────────┐  ┌────────────────────────────┐
 │ MongoDB Atlas  │  │ Vector store │  │  External services         │
-│ (M0 → M2)      │  │ Pinecone or  │  │  - Microsoft 365 Graph     │
+│ (pending)      │  │ Pinecone OR  │  │  - Microsoft 365 Graph     │
 │                │  │ Atlas Vector │  │  - Apollo.io REST API      │
-│ collections    │  │ Search       │  │  - Anthropic (Claude)      │
-│ as below       │  │              │  │  - Google AI (Gemini)      │
-│                │  │ collections: │  │  - Voyage AI (embeddings)  │
-│                │  │ wiki,        │  │  - Google APIs (GA4, SC)   │
-│                │  │ placements,  │  │  - Cloudinary              │
-│                │  │ emails_voice,│  │  - Upstash (rate limit)    │
-│                │  │ candidates   │  │  - Backblaze B2 (backups)  │
+│ 8 models       │  │ Search       │  │  - Anthropic (Claude)      │
+│ ready in       │  │ (Phase 4)    │  │  - Google AI (Gemini)      │
+│ models/*       │  │              │  │  - Voyage AI (embeddings)  │
+│                │  │              │  │  - Google APIs (GA4, SC)   │
+│                │  │              │  │  - Cloudinary              │
+│                │  │              │  │  - Upstash (rate limit)    │
+│                │  │              │  │  - Backblaze B2 (backups)  │
 └────────────────┘  └──────────────┘  └────────────────────────────┘
 ```
 
-**One Heroku app. One domain (apex `plattpartners.com`). One CORS surface. One deploy.**
+**One Heroku app. One domain. One CORS surface. One deploy.**
 
-The dashboard is at `/app/*` (auth-walled). The marketing site is at `/`, `/technology`, `/restaurants`, etc. Both ship from the same Next.js build.
+- **Heroku app:** `platt-partners` (heroku-24 stack, Basic dyno, US region)
+- **Production URL:** https://platt-partners-3b59df8c6202.herokuapp.com (until DNS cutover)
+- **Git remote:** `heroku` → https://git.heroku.com/platt-partners.git
+- **GitHub:** https://github.com/ryanhood10/PlattPartners
+
+The dashboard lives under `/app/*` (auth-walled). The marketing site lives at `/`, `/about`, etc. Both ship from the same Next.js build.
+
+---
+
+## Stack reality check
+
+| Layer | Choice | Status |
+|---|---|---|
+| Web framework | Next.js 14 Pages Router + React 18 + TypeScript strict | ✅ Shipping |
+| Styling | Tailwind 3.4 + shadcn-style components (copied, not registry-installed) | ✅ Shipping |
+| Auth | NextAuth v4 + Microsoft Entra provider | ⚠️ Wired, needs `MS_*` env vars |
+| API | Next.js API routes (no Express) | ✅ 3 routes live |
+| Database | MongoDB Atlas + Mongoose 8 | ⚠️ Models ready, no cluster yet |
+| Vector | Pinecone or Atlas Vector Search | ⏳ Phase 4 |
+| Embeddings | Voyage-3-lite | ⏳ Phase 4 |
+| LLM | Claude Sonnet (drafting), Haiku (classify), Gemini Flash (bulk) | ⏳ Phase 3+ |
+| Email | Microsoft 365 Graph | ⏳ Phase 3 |
+| Enrichment | Apollo.io | ⏳ Phase 2 |
+| Hosting | Heroku Basic dyno | ✅ Deployed |
+| Cron | Heroku Scheduler | ⏳ When first scheduled job needs it |
+| Logging | pino | ✅ Wired |
+
+Status legend: ✅ shipping in production, ⚠️ in code but needs config, ⏳ planned for a later phase
+
+---
+
+## Repo structure (actual)
+
+See `README.md` for the full tree. Key paths:
+
+```
+pages/                          # Routes
+  index.tsx                     # /
+  about.tsx                     # /about
+  contact.tsx                   # /contact
+  technology.tsx                # /technology
+  how-to-build-...tsx           # /how-to-build-a-robust-pipeline-of-qualified-candidates
+  privacy-policy.tsx            # /privacy-policy
+  sitemap.xml.tsx               # /sitemap.xml (XML)
+  robots.txt.tsx                # /robots.txt
+  app/                          # /app/* — auth-walled dashboard
+    index.tsx                   # → redirects to /app/pipeline
+    pipeline.tsx, clients.tsx, inbox.tsx, outreach.tsx,
+    bd.tsx, analytics.tsx, assistant.tsx, settings.tsx
+  api/
+    auth/[...nextauth].ts
+    health.ts
+    public/contact.ts
+
+components/
+  ui/button.tsx                 # shadcn-copied; add more via `npx shadcn add <name>`
+  marketing/                    # SiteHeader, SiteFooter, ContactForm, SeoHead, JsonLd
+  dashboard/                    # DashboardLayout, EmptyState
+
+lib/
+  db.ts                         # Mongoose connection (cached for HMR)
+  auth.ts                       # NextAuth options + requireAuth() GSSP helper
+  logger.ts                     # pino + secret redaction
+  api.ts                        # Frontend API client (typed)
+  utils.ts                      # cn() for shadcn
+  site.ts                       # SITE_URL + brand identity
+  schema.ts                     # Schema.org JSON-LD builders
+  mock.ts                       # Dashboard mock data (DELETE when Atlas connects)
+
+models/                         # Mongoose schemas, singleton pattern
+  Candidate.ts, Client.ts, Job.ts, PipelineState.ts,
+  OutreachDraft.ts, EmailMeta.ts, Contact.ts, User.ts,
+  index.ts                      # Re-exports
+
+styles/globals.css              # Tailwind + shadcn CSS vars themed to Platt brand
+types/next-auth.d.ts            # Module augmentation: session.user.id
+
+Procfile                        # web: npm run start
+app.json                        # Heroku manifest
+next.config.js                  # 301 redirects + image remote patterns
+tailwind.config.js              # Brand palette + display/sans fonts
+.github/workflows/ci.yml        # Typecheck + lint + build on PR
+```
 
 ---
 
@@ -68,164 +151,110 @@ The dashboard is at `/app/*` (auth-walled). The marketing site is at `/`, `/tech
 |---|---|
 | Next.js Pages Router | SSR/SSG for marketing SEO; file-based routing matches Ryan's CRA muscle memory; Heroku-native deploy |
 | Single Heroku app | One domain, no CORS, simpler deploy story, lower cost ($7 Basic dyno vs $14 for two) |
-| Drop Express | Next.js API routes handle the same surface; cuts the dependency footprint and the second build target |
-| NextAuth (Auth.js) with Entra provider | Replaces passport-azure-ad with a Next.js-native solution; less custom auth code |
-| Mongoose unchanged | Schema design from handoff still applies; just moves into `models/` at the app root |
-
----
-
-## Repo structure
-
-```
-PlattPartners/
-├── pages/
-│   ├── index.tsx                 # Public homepage (restaurant-first)
-│   ├── technology.tsx            # /technology vertical
-│   ├── restaurants.tsx           # /restaurants vertical
-│   ├── it-leadership.tsx         # /it-leadership vertical
-│   ├── about.tsx                 # /about
-│   ├── contact.tsx               # /contact
-│   ├── case-studies/[slug].tsx   # /case-studies/<slug>
-│   ├── blog/[slug].tsx           # /blog/<slug>
-│   ├── app/                      # AUTH-WALLED dashboard
-│   │   ├── pipeline.tsx
-│   │   ├── clients.tsx
-│   │   ├── inbox.tsx
-│   │   ├── outreach.tsx
-│   │   ├── bd.tsx
-│   │   ├── analytics.tsx
-│   │   ├── assistant.tsx
-│   │   └── settings.tsx
-│   ├── api/
-│   │   ├── auth/[...nextauth].ts
-│   │   ├── health.ts
-│   │   ├── public/ask.ts         # Rate-limited public AI widget
-│   │   ├── candidates/*.ts
-│   │   ├── clients/*.ts
-│   │   ├── pipeline/*.ts
-│   │   ├── outreach/*.ts
-│   │   ├── inbox/*.ts
-│   │   ├── bd/*.ts
-│   │   ├── analytics/*.ts
-│   │   ├── assistant/*.ts
-│   │   ├── jobs/[name].ts        # Heroku Scheduler hits these
-│   │   └── webhooks/
-│   │       ├── msgraph.ts
-│   │       └── onedrive.ts
-│   ├── _app.tsx
-│   └── _document.tsx
-├── components/
-│   ├── ui/                       # shadcn-generated components
-│   ├── marketing/                # Public-page components (Hero, Logos, Testimonial)
-│   ├── dashboard/                # Dashboard-page components (PipelineKanban, ClientTable)
-│   └── widget/                   # Public AI widget React component
-├── lib/
-│   ├── db.ts                     # Mongoose connection
-│   ├── api.ts                    # Frontend API client (used by dashboard)
-│   ├── auth.ts                   # NextAuth helpers
-│   ├── logger.ts                 # pino
-│   ├── middleware/
-│   │   ├── requireAuth.ts
-│   │   ├── rateLimit.ts          # Upstash-backed for /api/public/ask
-│   │   └── error.ts
-│   ├── services/
-│   │   ├── apollo.ts
-│   │   ├── msgraph.ts
-│   │   ├── claude.ts
-│   │   ├── gemini.ts
-│   │   ├── voyage.ts
-│   │   ├── google.ts             # GA4 + Search Console
-│   │   ├── cloudinary.ts
-│   │   └── slack.ts
-│   ├── prompts/                  # Claude system prompts
-│   ├── bd/                       # BD scoring + brief generation
-│   ├── scoring/                  # Candidate authenticity + fit scoring
-│   └── jobs/                     # Scheduled-job handlers (called by /api/jobs)
-├── models/
-│   ├── Candidate.ts
-│   ├── Client.ts
-│   ├── Job.ts
-│   ├── PipelineState.ts
-│   ├── OutreachDraft.ts
-│   ├── EmailMeta.ts
-│   ├── AssistantLog.ts
-│   ├── ApolloUsage.ts
-│   ├── BDSignal.ts
-│   ├── BDBrief.ts
-│   ├── AnalyticsDaily.ts
-│   └── User.ts
-├── public/                       # Static assets (logos, brand images)
-├── styles/
-│   └── globals.css               # Tailwind base
-├── docs/                         # decisions, architecture, build_plan, etc.
-├── knowledge/                    # AI source-of-truth wiki + brand
-├── eval/                         # Nightly assistant eval set
-├── scripts/                      # Setup, seed, verify-env
-├── _research/                    # WP site extraction (gitignored after Phase 0)
-├── TEAMS.md
-├── CLAUDE.md
-├── README.md
-├── package.json
-├── next.config.js                # Includes 301 redirect map for WP migration
-├── tailwind.config.js
-├── postcss.config.js
-├── tsconfig.json
-├── Procfile
-├── app.json                      # Heroku Scheduler entries
-├── .env.example
-└── .gitignore
-```
+| Next.js API routes (no Express) | Replaces the handoff's separate Express server; cuts the dependency footprint |
+| NextAuth v4 with Entra provider | Pages Router native; Auth.js v5 stable but Pages Router examples lag |
+| Mongoose 8 | Schema design from handoff applies as-is; singleton-with-`models[X]` pattern handles HMR re-imports |
 
 ---
 
 ## Data flow: from JD to placement
 
-Same as the handoff, simplified to one app:
+Same path as the handoff envisioned, simplified to one app:
 
 ```
 1. Peter enters JD → POST /api/jobs → stored in `jobs` collection
 2. Peter exports CSV from LinkedIn Recruiter (manual; we never automate)
-3. CSV lands in watched OneDrive folder → MS Graph webhook → POST /api/webhooks/onedrive
-4. Parse CSV → queue Apollo enrichment (Mongo-backed queue, processed by web dyno)
-5. Apollo /v1/people/bulk_match → upsert candidate docs
-6. Candidate scoring service → write `score` + `rationale`
-7. Outreach draft service → Claude Sonnet using voice corpus + JD context → outreach_queue
-8. Dashboard Outreach Queue shows drafts; Slack ping fires
+3. CSV lands in watched OneDrive folder → MS Graph webhook
+   → POST /api/webhooks/onedrive
+4. Parse CSV → upsert candidate docs → queue Apollo enrichment
+5. Apollo /v1/people/bulk_match → backfill email + phone
+6. Authenticity scoring + JD-fit scoring (Haiku) → write to candidate.score
+7. Outreach draft service → Claude Sonnet using voice corpus + JD context
+   → write to outreach_queue
+8. Dashboard Outreach Queue shows drafts; Slack/SMS ping fires
 9. Peter taps Approve → MS Graph /sendMail from outreach.plattpartners.com
-10. Reply lands → MS Graph webhook → POST /api/webhooks/msgraph → classify + summarize
-11. Peter screens → enters notes → state advances
+10. Reply lands → MS Graph webhook → POST /api/webhooks/msgraph
+    → classify (positive/neutral/negative/OOO) + summarize
+11. Peter screens → enters notes → pipeline_state advances
 12. Submission packet → Peter approves → sent to client
-13. Placement → auto-generates /knowledge/placements/<slug>.md doc
+13. Placement → auto-generates /knowledge/placements/<slug>.md
 ```
+
+Steps 1, 6-13 are not yet implemented (Phase 2+). Steps 2-5 land in Phase 2.
 
 ---
 
 ## Mongoose collections
 
-Same shape as the handoff's [architecture.md](../handoff/platt-partners-handoff/docs/architecture.md). Models live under `models/`. Backend agent finalizes during Phase 1.
+Defined in `models/*.ts`. Each uses the singleton-via-`models[X]` pattern for Next.js hot reload safety.
 
-Headline collections: `candidates`, `clients`, `jobs`, `pipeline_state`, `outreach_queue`, `emails_meta`, `assistant_logs`, `apollo_usage`, `analytics_daily`, `bd_signals`, `bd_briefs`, `users`.
+| Model | File | Purpose |
+|---|---|---|
+| `Candidate` | `models/Candidate.ts` | LinkedIn-export-or-applicant; Apollo-enriched email/phone; PII flags |
+| `Client` | `models/Client.ts` | HR-contact pod, tier 1-3, Friday-call-list flag |
+| `Job` | `models/Job.ts` | JD + prescreen questions + status |
+| `PipelineState` | `models/PipelineState.ts` | One per (candidate × job); stage transitions with history audit |
+| `OutreachDraft` | `models/OutreachDraft.ts` | Claude-generated drafts awaiting Peter's approval |
+| `EmailMeta` | `models/EmailMeta.ts` | M365 message metadata + classification (bodies stay in MS Graph) |
+| `Contact` | `models/Contact.ts` | Public-site contact-form submissions (live today) |
+| `User` | `models/User.ts` | Authenticated dashboard users + MS Graph refresh tokens |
+
+Indexes: `Candidate.linkedin_url` (unique), `Candidate.email`, `Client.contact_email`, `PipelineState.{candidate_id, job_id}` (compound unique), `EmailMeta.ms_message_id` (unique), etc.
+
+Pending models (Phase 4+): `AssistantLog`, `ApolloUsage`, `AnalyticsDaily`, `BDSignal`, `BDBrief`.
+
+---
+
+## Qdrant → Pinecone/Atlas Vector
+
+The handoff specced Qdrant on a Raspberry Pi. We removed the Pi from v1 architecture (see `docs/decisions.md` 2026-05-14). `ai-mgr` picks Pinecone vs Atlas Vector Search at Phase 4 kickoff.
+
+Collections (logical, not yet provisioned):
+| Collection | Source | Trust | PII | Public-safe |
+|---|---|---|---|---|
+| `wiki` | `knowledge/wiki/*.md` | 3 | no | yes |
+| `placements` | `knowledge/placements/*.md` | 3 | no | no |
+| `clients` | `knowledge/clients/*.md` | 3 | yes | no |
+| `emails_voice` | scrubbed `knowledge/emails-voice-corpus/` | 1 | scrubbed | no |
+| `candidates` | candidate docs | 2 | yes | no |
+
+Embedding model: Voyage-3-lite (1024 dim). Chunk: 512 tokens, 64 overlap. Retrieval: parent-document.
 
 ---
 
 ## Auth
 
-NextAuth (Auth.js) with the **Microsoft Entra provider**. Single Entra app registration in Peter's M365 tenant covers:
-- Dashboard login (`User.Read`)
-- Mail send + receive (`Mail.ReadWrite`, `Mail.Send`)
-- OneDrive watch folder (`Files.Read` scoped to `/PlattPartners/`)
-- Mailbox settings (`MailboxSettings.Read`)
-- Refresh tokens (`offline_access`)
+NextAuth v4 (`pages/api/auth/[...nextauth].ts`) with Microsoft Entra provider. Single Entra app registration in Peter's M365 tenant covers (scopes ramp per phase):
 
-Session cookies: HttpOnly, Secure, SameSite=Lax. Refresh handled by NextAuth.
+| Scope | Phase |
+|---|---|
+| `User.Read`, `offline_access` | 0 (login works) |
+| `Mail.ReadWrite`, `Mail.Send`, `MailboxSettings.Read` | 3 (outreach) |
+| `Files.Read.Selected` (scoped to `/PlattPartners/`) | 2 (CSV ingest) |
+| `Calendars.ReadWrite` | 3 (prescreen scheduling) |
 
-`/api/public/ask` does NOT use NextAuth — it's open with CORS check + Upstash rate limit + per-session token cap + daily spend kill-switch.
+Session cookies: HttpOnly, Secure, SameSite=Lax. 7-day expiry. JWT-encoded so MS Graph tokens hitchhike in the session without a separate session table.
+
+`/api/public/*` does NOT use NextAuth — open with CORS check + Upstash rate limit (Phase 4).
 
 ---
 
-## Scheduled jobs (Heroku Scheduler)
+## SEO infrastructure (live today)
 
-Only five, all hit `/api/jobs/<name>` on the web dyno with a shared-secret header:
+- **`/sitemap.xml`** — server-rendered, lists all 6 public pages, canonical URLs hardcoded to plattpartners.com (so when DNS flips, the sitemap doesn't need a code change)
+- **`/robots.txt`** — allows crawlers, disallows `/api/` and `/app/`, references the sitemap
+- **JSON-LD** — every marketing page emits an `@graph` with Organization + WebSite + WebPage + page-specific types (ProfessionalService on `/` and `/technology`, Person on `/about`, Article on `/how-to-build-...`)
+- **OG + Twitter Card** — uniform across pages via `<SeoHead>` component; uses `public/og-image.jpg` (Peter's existing 1200x628 image)
+- **301 redirects in `next.config.js`** — `/about-services` → `/about`, `/about-services/` → `/about`, `/header` → `/` (Beaver Builder template that was in his sitemap)
+- **Canonical URL tags** — per page, via `<SeoHead>`
+
+DNS cutover walkthrough: see `docs/runbooks/dns-cutover.md`.
+
+---
+
+## Scheduled jobs (Heroku Scheduler — none scheduled yet)
+
+When phase 6 lands, these run via Heroku Scheduler hitting `/api/jobs/<name>` with a `JOB_RUNNER_SECRET` header:
 
 | Job | Schedule | Endpoint |
 |---|---|---|
@@ -239,34 +268,31 @@ All other work is webhook- or user-action-triggered (see `docs/decisions.md` —
 
 ---
 
-## Public marketing site
+## Public marketing site (live)
 
-Same Next.js app, served at the apex. Pages are SSR by default (so social-share previews and crawlers see fully-rendered HTML); cached at the edge by Heroku's reverse proxy via `Cache-Control` headers.
-
-Pages (Phase 1 deliverable):
 - `/` — Restaurant-first homepage (lead with Jack in the Box, Del Taco, El Pollo Loco, Petco logos; copy reused from current WP site)
-- `/technology` — Tech vertical (preserve the GitLab case study currently at /technology)
-- `/restaurants` — Restaurant ops vertical (NEW)
-- `/it-leadership` — Executive IT vertical (NEW)
-- `/about` — Peter's 25-year story, team-of-5 framing
-- `/case-studies/<slug>` — Per-placement case studies (populated from `knowledge/placements/`)
-- `/blog/<slug>` — Blog posts (populated from `knowledge/blog/`)
-- `/contact` — Form posting to `/api/public/contact` (no third-party form)
+- `/about` — Peter's 25-year story + RPO/SEARCH/Staffing service framing + 3 testimonials
+- `/technology` — Tech vertical (preserved GitLab case study; anonymized as "DevOps company with $100M+ Iconiq funding")
+- `/how-to-build-a-robust-pipeline-of-qualified-candidates` — Landing page with PDF lead magnet
+- `/contact` — Standalone form page
+- `/privacy-policy` — Extracted from current WP site
 
-301 redirect map in `next.config.js` covers every WP URL from the Yoast sitemap.
+Pending (Phase 1): `/restaurants` and `/it-leadership` (or whichever verticals Peter confirms — currently blocked on `docs/blockers.md` item #8).
 
-Public AI widget is a React component, mounted on every public page in `_app.tsx` (configurable per route).
+All public pages SSR by default. Static assets cached at the Heroku edge via `Cache-Control` headers.
+
+Public AI widget (Phase 4) will mount globally in `_app.tsx`, configurable per route.
 
 ---
 
 ## Tracking & analytics
 
-- GA4 (NEW — replaces the deprecated UA-172816061-1 currently on the WP site)
-- Google Search Console (transferred ownership from current WP setup)
-- Optional: Microsoft Clarity for session replay (free)
-- Server-side event capture for dashboard actions (logged to `assistant_logs` or a new `events` collection)
+- **GA4** — needs Peter to grant Search Console access (`docs/peter-onboarding.md` item #5) OR create a fresh property. Current WP site is firing deprecated UA-172816061-1.
+- **Search Console** — same dependency
+- **Microsoft Clarity** (optional, free) — session replay; defer
+- **Server-side event capture** — Phase 6, when assistant_logs and event tables are added
 
-Tracking-code injection happens in `pages/_app.tsx` with a `<NEXT_PUBLIC_GA_ID>` env var.
+Tracking-code injection lives in `pages/_app.tsx` (TODO: add when GA4 ID is known).
 
 ---
 
@@ -274,20 +300,20 @@ Tracking-code injection happens in `pages/_app.tsx` with a `<NEXT_PUBLIC_GA_ID>`
 
 | Failure | Impact | Recovery |
 |---|---|---|
-| Heroku web dyno sleep (Eco only; Basic doesn't sleep) | First request after sleep ~10-15s | Use Basic dyno ($7/mo) — eliminates sleep entirely |
-| Mongo Atlas hits 512MB | Writes fail | Alert at 400MB; archive cold candidates/emails to JSONL; upgrade to M2 |
+| Heroku Basic dyno restart | Brief request loss (~5s) | Dyno restarts automatically |
+| Mongo Atlas hits 512MB (when connected) | Writes fail | Alert at 400MB; archive cold candidates/emails to JSONL; upgrade to M2 ($9/mo) |
 | Anthropic API outage | AI drafting + assistant degraded | Feature-flag fallback to Gemini Flash |
 | Apollo rate limit | Enrichment paused | Back-off + retry; track in `apollo_usage` |
-| GA4 quota exceeded | Daily snapshot incomplete | Retry tomorrow; quota resets at midnight Pacific |
-| LinkedIn restricts Peter's seat | Sourcing pipeline stops | Never happens if manual-only rule followed; fallback to job-board sourcing if it ever does |
-| Public widget hit by abuse | Token spend spikes | Upstash rate limit cuts at 10/min/IP, daily spend kill-switch hits at $5 |
-| DNS / TLS misconfig during WP cutover | Site down | Cutover plan keeps WP accessible at `wp.plattpartners.com` (basic-auth) for 30-day rollback window |
+| GA4 quota exceeded | Daily snapshot incomplete | Retry next day; quota resets at midnight Pacific |
+| LinkedIn restricts Peter's seat | Sourcing stops | Never happens if manual-only rule followed; fallback = job-board + referrals |
+| Public widget abuse | Token spend spikes | Upstash rate limit cuts at 10/min/IP, daily spend kill-switch at $5 |
+| DNS / TLS misconfig during cutover | Site down | Cutover plan in `docs/runbooks/dns-cutover.md`; old WP kept at `wp.plattpartners.com` (basic-auth) for 30-day rollback |
 
 ---
 
 ## Open architectural questions (deferred to phase kickoffs)
 
 - Vector DB: Pinecone vs Atlas Vector Search — `ai-mgr` decides during Phase 4
-- Heroku dyno type: Eco ($5, sleeps) vs Basic ($7, doesn't sleep) — recommend Basic; `devops` confirms during Phase 1
-- Heroku worker dyno: add if Apollo bulk enrichment runs ever exceed 30 seconds — defer until measured
-- Where to send Slack approval pings — `#peter-approvals` or DM — Peter's call
+- Worker dyno needed? — measure first; only add if a job runs >30s consistently
+- Where to send Slack approval pings — `#peter-approvals` channel or DM — Peter's call (Phase 3)
+- Phase 4 vector-search latency from Heroku → Pinecone vs Atlas — measure both before committing

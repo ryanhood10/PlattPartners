@@ -6,7 +6,7 @@ Read by Claude Code on every session. Encodes the standing rules, conventions, a
 
 ## What this project is (one paragraph)
 
-Single-codebase Next.js app for **Platt Partners** (plattpartners.com), Peter Platt's recruiting firm. Deploys to one Heroku app at the apex domain. Public marketing pages (SSR) + authenticated dashboard under `/app/*` + Next.js API routes. MongoDB Atlas for structured data; Pinecone or Atlas Vector Search for embeddings (decided in Phase 4). NextAuth/Auth.js with Microsoft Entra provider for auth. Claude + Gemini for AI; Microsoft Graph for email; Apollo.io for enrichment; LinkedIn Recruiter for sourcing (manual CSV export only). Owner: Ryan Hood (ryan@eldrin.ai).
+Single-codebase Next.js app for **Platt Partners** (plattpartners.com), Peter Platt's recruiting firm. Deploys to one Heroku app at the apex domain. Public marketing pages (SSR/SSG) + authenticated dashboard under `/app/*` + Next.js API routes. MongoDB Atlas for structured data; Pinecone or Atlas Vector Search for embeddings (decided Phase 4). NextAuth v4 with Microsoft Entra provider for auth. Claude + Gemini for AI; Microsoft Graph for email; Apollo.io for enrichment; LinkedIn Recruiter for sourcing (manual CSV export only). Owner: Ryan Hood (ryan@eldrin.ai).
 
 ---
 
@@ -28,12 +28,17 @@ Single-codebase Next.js app for **Platt Partners** (plattpartners.com), Peter Pl
 - Before embedding emails into the voice corpus vector store, PII must be scrubbed (names, addresses, phones replaced with `<REDACTED_NAME>`, etc.).
 - Implement a one-click "Forget this person" endpoint that deletes a candidate and their embeddings (GDPR/CCPA — Peter is a joint controller with Apollo).
 
+### About confirming actions
+- **Code changes (Edit, Write, local Bash, `git push origin`, `git push heroku main` of already-committed code) — just do it.** Ryan reviews via commit messages and the deployed site.
+- **Creating accounts / naming resources / changing production config — confirm first.** `heroku create`, `heroku config:set` (in production), Atlas/Pinecone/Upstash account creation, custom-domain attach, DNS-record changes. State the exact command and wait for OK.
+- See `memory/feedback_confirm_before_execute.md` for the standing rule.
+
 ### About branching and commits
 - Default branch: `main`
 - Feature branches: `phase-N/<short-name>` (e.g., `phase-1/dashboard-shell`)
 - Commit prefixes: `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`, `wip:`
 - Never commit `.env`, `node_modules`, `.next`, `dist`, `build`, `knowledge/candidates/*` (except `.gitkeep`), `knowledge/emails-voice-corpus/*` (except `README.md`).
-- Run `pnpm verify-env` before every commit once the script exists.
+- Run `node scripts/verify-env.js` (also exposed as `npm run verify-env`) before every commit.
 
 ### About working with Ryan
 - He's a programmer who builds and ships. Default to writing code that works rather than producing endless design docs. But there are explicit checkpoints where you stop and confirm before proceeding.
@@ -46,39 +51,40 @@ Single-codebase Next.js app for **Platt Partners** (plattpartners.com), Peter Pl
 ## Conventions
 
 ### Code style
-- **TypeScript everywhere.** No `.js` files except config files that conventionally use `.cjs`.
+- **TypeScript everywhere.** No `.js` files except config files that conventionally use `.cjs` and the verify-env script.
 - Strict mode TypeScript. No `any` unless absolutely necessary and commented.
-- Prettier defaults; ESLint with `@typescript-eslint/recommended` + `next/core-web-vitals`.
+- Prettier defaults; ESLint with `next/core-web-vitals`.
 - React functional components only; hooks for state; no class components.
-- Tailwind utility classes preferred over custom CSS. Tailwind config extends shadcn theme tokens.
+- Tailwind utility classes preferred over custom CSS. Tailwind config extends shadcn theme tokens via CSS variables in `styles/globals.css`.
 
 ### File naming
-- React components: `PascalCase.tsx` (e.g., `PipelineKanban.tsx`)
-- React hooks: `useCamelCase.ts` (e.g., `useCandidates.ts`)
-- API routes: `kebab-case.ts` (e.g., `pages/api/outreach-queue.ts`)
-- Models (Mongoose): `PascalCase.ts` (e.g., `models/Candidate.ts`)
+- React components: `PascalCase.tsx` (e.g., `SiteHeader.tsx`, `DashboardLayout.tsx`)
+- React hooks: `useCamelCase.ts`
+- API routes: `kebab-case.ts` (e.g., `pages/api/public/contact.ts`)
+- Mongoose models: `PascalCase.ts` (e.g., `models/Candidate.ts`)
 - Markdown wiki: `kebab-case.md`
-- Per-entity wiki pages: `{entity}-{slug}.md` (e.g., `jack-in-the-box-sarah-jones.md`)
+- Per-entity wiki pages: `{entity}-{slug}.md`
 
 ### Folder boundaries
-- `pages/` and `pages/app/` are user-facing routes; never import from `pages/api/*` directly — go through `lib/api.ts` on the client side.
+- `pages/` and `pages/app/` are user-facing routes; never import from `pages/api/*` directly on the client side — go through `lib/api.ts`.
 - `pages/api/*` is server-only; use `lib/db.ts`, `lib/services/*`, `models/*`.
-- `lib/services/*` wrap third-party APIs; route handlers compose them.
-- `models/` holds Mongoose schemas; never import a model into a client-side component.
+- `components/marketing/*` is for public-page components; `components/dashboard/*` is for authenticated pages; `components/ui/*` is for shadcn-copied primitives.
+- `lib/services/*` wrap third-party APIs (most don't exist yet — see `docs/build_plan.md` for what lands when); route handlers compose them.
+- `models/` holds Mongoose schemas; never import a model into a client-side component (server-only).
 
 ### Logging
-- `pino` for server-side structured JSON logs.
-- `console.log` only during local dev or in scripts.
-- Never log PII — log IDs only.
+- `pino` for server-side structured JSON logs via `lib/logger.ts`.
+- `console.log` only during local dev or in `scripts/`.
+- Never log PII — log IDs only. Logger has secret-redaction enabled for common token field names.
 
 ### Errors
 - API responses: `{ ok: true, data }` or `{ ok: false, error: { code, message } }`.
-- Throw typed errors (`AppError` class) inside route handlers; convert to response shape in `lib/middleware/error.ts`.
+- Throw typed errors inside route handlers (e.g., `lib/api.ts` has the `ApiError` class for client-side).
 - Frontend handles `ok: false` by surfacing the message, with retry where applicable.
 
 ### Testing
-- `vitest` for unit tests.
-- Aim for test coverage on: Mongoose schema validators, route handlers (use `node-mocks-http`), critical business logic (candidate scoring, outreach throttling, PII scrubber).
+- `vitest` for unit tests (not configured yet — add when first test lands).
+- Aim for test coverage on: Mongoose schema validators, route handlers, critical business logic (candidate scoring, outreach throttling, PII scrubber).
 - Playwright smoke tests for the dashboard (Phase 1+).
 
 ---
@@ -105,11 +111,12 @@ When you write the assistant's system prompt later, these constraints MUST be in
 
 ## When in doubt
 
-1. Check `docs/build_plan.md` for what we're building.
-2. Check `docs/architecture.md` for how it fits together.
-3. Check `docs/decisions.md` for what's been decided.
-4. Check `docs/blockers.md` for what's stuck.
-5. Check `TEAMS.md` to figure out which sub-agent owns the work.
-6. Ask Ryan.
+1. Check [`docs/build_plan.md`](docs/build_plan.md) for what we're building.
+2. Check [`docs/architecture.md`](docs/architecture.md) for how it fits together.
+3. Check [`docs/decisions.md`](docs/decisions.md) for what's been decided.
+4. Check [`docs/blockers.md`](docs/blockers.md) for what's stuck.
+5. Check [`docs/CHANGELOG.md`](docs/CHANGELOG.md) for what's been shipped.
+6. Check [`TEAMS.md`](TEAMS.md) to figure out which sub-agent owns the work.
+7. Ask Ryan.
 
 Do not invent specs.

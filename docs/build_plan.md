@@ -3,7 +3,8 @@
 **Client:** Peter Platt, Platt Partners (plattpartners.com)
 **Builder:** Ryan Hood
 **Owner of this plan:** `project-manager` agent (see TEAMS.md)
-**Status:** Locked 2026-05-14
+**Status:** Phase 0 ~80% done, Phase 1 partially shipped
+**Last reconciled:** 2026-05-14
 
 This plan supersedes the handoff's [build_plan.md](../handoff/platt-partners-handoff/docs/build_plan.md). Differences from the handoff:
 
@@ -14,6 +15,8 @@ This plan supersedes the handoff's [build_plan.md](../handoff/platt-partners-han
 - Out of scope: Peter's financials
 - Team structure: 12-role roster in TEAMS.md (was 8)
 
+For what's been built per commit, see [`CHANGELOG.md`](CHANGELOG.md).
+
 ---
 
 ## Phase 0 — Foundation (Weeks 1-2)
@@ -21,28 +24,27 @@ This plan supersedes the handoff's [build_plan.md](../handoff/platt-partners-han
 The first two weeks set up everything downstream. Nothing user-visible to Peter yet.
 
 ### Deliverables
-- [ ] Repo at `git@github.com:ryanhood10/PlattPartners.git` initialized, scaffold pushed
-- [ ] Heroku app `platt-partners` created, Basic dyno, custom domain `plattpartners.com` claimed
-- [ ] MongoDB Atlas M0 cluster + connection URI in Heroku Config Vars
-- [ ] DNS plan documented; current Flywheel records inventoried; cutover plan drafted (NOT executed)
-- [ ] Microsoft Entra app registered in Peter's M365 tenant; OAuth flow working end-to-end (Peter can sign in to a placeholder `/app` page)
-- [ ] Brand kit locked: colors (#428bca primary, #215273 secondary), fonts (Work Sans + Roboto via `next/font`), logo SVG
-- [ ] WP site content extracted (already done; `_research/plattpartners-site/`)
-- [ ] CLAUDE.md, TEAMS.md, docs/decisions.md, docs/architecture.md, docs/build_plan.md committed
-- [ ] `.env.example` complete; `pnpm verify-env` script works
-- [ ] GitHub Actions CI workflow runs lint + typecheck + test on PR
-- [ ] Heroku auto-deploy from `main` configured
-- [ ] Sentry (optional) or basic Heroku metrics monitoring set up
+- [x] Repo at `git@github.com:ryanhood10/PlattPartners.git` initialized, scaffold pushed
+- [x] Heroku app `platt-partners` created, Basic dyno, live at `https://platt-partners-3b59df8c6202.herokuapp.com`
+- [ ] MongoDB Atlas M0 cluster + connection URI in Heroku Config Vars **(waiting on Ryan to create the cluster — see `docs/runbooks/atlas-setup.md`)**
+- [ ] DNS plan documented; current Flywheel records inventoried; cutover plan drafted **(plan written: `docs/runbooks/dns-cutover.md`; needs Peter's DNS access)**
+- [ ] Microsoft Entra app registered in Peter's M365 tenant; OAuth flow working end-to-end **(NextAuth wired; needs Peter's M365 admin access)**
+- [x] Brand kit locked: colors (#428bca primary, #215273 secondary), fonts (Work Sans + Roboto via `next/font`), logo SVG
+- [x] WP site content extracted (`_research/plattpartners-site/`)
+- [x] CLAUDE.md, TEAMS.md, docs/decisions.md, docs/architecture.md, docs/build_plan.md committed
+- [x] `.env.example` complete; `scripts/verify-env.js` works
+- [x] GitHub Actions CI workflow runs typecheck + build on PR (`.github/workflows/ci.yml`)
+- [ ] Sentry (optional) or basic Heroku metrics monitoring set up **(deferred — Heroku built-in metrics for now)**
 
-### Open asks of Peter to complete this phase
-- M365 admin access to register the Entra app
-- Confirm brand colors and any logo variants we don't have
-- Confirm canonical phone + email (site currently has 3 phones, 2 emails)
-- Confirm canonical verticals — site says tech/finance/fast-casual; handoff says restaurant/tech/IT/construction. Pick three.
-- Confirm canonical service framing — subscription/per-placement OR RPO/SEARCH/Staffing. Pick one.
+### Open asks of Peter (live tracker: `docs/peter-onboarding.md`)
+- M365 admin access to register the Entra app (ask #1)
+- Confirm brand colors and any logo variants we don't have (ask #3)
+- Canonical decisions on phone + email + verticals + service framing (asks #6-9)
+- DNS write access (ask #4) — required before cutover
+- Google Search Console access (ask #5) — required for SEO baseline
 
 ### Why this matters
-Every phase below depends on a working Heroku deploy, Peter being able to log in, and the brand being locked. If we don't nail this in two weeks the rest of the build slides.
+Every phase below depends on a working Heroku deploy, Peter being able to log in, and the brand being locked. ✅ Heroku and brand are done. ⚠️ Atlas + M365 + DNS are the live blockers.
 
 ---
 
@@ -51,26 +53,31 @@ Every phase below depends on a working Heroku deploy, Peter being able to log in
 The public site goes live on our stack. Peter logs in and sees a dashboard skeleton.
 
 ### Deliverables — Marketing site
-- [ ] All public pages built: `/`, `/technology`, `/restaurants`, `/it-leadership`, `/about`, `/contact`
-- [ ] Content from `_research/plattpartners-site/` populated into `knowledge/` and rendered by the marketing pages
-- [ ] 301 redirect map in `next.config.js` for every URL from the Yoast sitemap (even unchanged URLs get explicit 301s)
-- [ ] OG images for every page (Cloudinary-generated or Next.js OG image route)
-- [ ] Sitemap.xml + robots.txt generated by Next.js
-- [ ] GA4 property created (replaces dead UA-172816061-1)
-- [ ] Search Console verified for new property; sitemap submitted
-- [ ] **DNS CUTOVER** — apex flips from Flywheel WP to Heroku. Old WP accessible at `wp.plattpartners.com` (basic-auth) for 30-day rollback window.
-- [ ] 30-day post-cutover monitoring: Core Web Vitals, Search Console clicks/impressions, 404 log alerting
+- [x] Core public pages built: `/`, `/about`, `/contact`, `/technology`, `/how-to-build-a-robust-pipeline-of-qualified-candidates`, `/privacy-policy`
+- [ ] Vertical sub-pages: `/restaurants`, `/it-leadership`, and a third TBD **(blocked on `docs/blockers.md` item #8 — Peter to confirm verticals)**
+- [x] Content from `_research/plattpartners-site/` populated into the pages
+- [x] 301 redirect map in `next.config.js` for URL changes
+- [x] OG image set on every page (via `<SeoHead>` component); 1200×628
+- [x] Sitemap.xml + robots.txt generated by Next.js
+- [x] Schema.org JSON-LD on every public page (Yoast-style `@graph`)
+- [ ] GA4 property created (replaces dead UA-172816061-1) **(blocked on Peter's GSC access)**
+- [ ] Search Console verified for new property; sitemap submitted **(blocked on Peter's GSC access)**
+- [ ] **DNS CUTOVER** — apex flips from Flywheel WP to Heroku. Old WP accessible at `wp.plattpartners.com` (basic-auth) for 30-day rollback window. **(blocked on Peter's DNS access — runbook: `docs/runbooks/dns-cutover.md`)**
+- [ ] 30-day post-cutover monitoring: Core Web Vitals, Search Console clicks/impressions, 404 log alerting **(post-cutover)**
 
 ### Deliverables — Dashboard shell
-- [ ] All eight dashboard pages built with empty-state UI: Pipeline, Clients, Inbox, Outreach Queue, BD Queue, Analytics, Assistant, Settings
-- [ ] NextAuth/Entra login fully functional (Peter signs in once, lands in dashboard)
-- [ ] Mongoose schemas in place; all collections seeded with empty docs as needed
-- [ ] Excel-to-Mongo nightly sync for Peter's current client sheet (Heroku Scheduler)
-- [ ] Slack webhook plumbed (or Twilio SMS — Peter's pick) for HITL approval pings
-- [ ] Public AI widget React component placeholder on every public page (renders, doesn't yet have AI behind it)
+- [x] All eight dashboard pages built: Pipeline, Clients, Inbox, Outreach Queue, BD Queue, Analytics, Assistant, Settings (auth-walled, with mock data so they look alive)
+- [x] DashboardLayout with sidebar nav + auth gate via `requireAuth()` GSSP helper
+- [x] NextAuth/Entra login wired (functional once `MS_*` vars are set)
+- [x] Mongoose schemas in place for Candidate, Client, Job, PipelineState, OutreachDraft, EmailMeta, Contact, User
+- [ ] Excel-to-Mongo nightly sync for Peter's current client sheet **(deferred until Peter sends the Excel and Atlas is connected)**
+- [ ] Slack webhook plumbed for HITL approval pings **(Phase 3)**
+- [x] Public-page mobile nav (hamburger menu)
 
 ### Critical alignment check (per Ryan)
-`project-manager` confirms before closing Phase 1: marketing-site copy + analytics tracking + brand kit are coherent. If any drift, Phase 2 doesn't start.
+`project-manager` confirms before closing Phase 1: marketing-site copy + analytics tracking + brand kit are coherent.
+
+**Phase 1 status:** marketing-site clone + dashboard shell are deployed and demo-ready with mock data. The remaining items all depend on Peter (DNS, GSC, M365) or his vertical confirmation. Once those land, Phase 1 closes in days.
 
 ---
 
@@ -83,12 +90,12 @@ The wedge. This is what gives Peter hours back.
 - [ ] CSV parser (tolerant to LinkedIn's varying column names per export type)
 - [ ] Apollo `/v1/people/bulk_match` client with credit-burn tracking → `apollo_usage` collection
 - [ ] Candidate authenticity scorer (resume-vs-LinkedIn cross-check + device/IP heuristics) — scores 0-100, only surfaces <60 to Peter for review
-- [ ] Pipeline kanban view (in dashboard) populated with real candidates after first CSV drop
-- [ ] One-click "Forget this person" endpoint that deletes Mongo doc + vector embeddings + Apollo cache (GDPR/CCPA compliance)
+- [ ] Pipeline kanban view populated with real candidates after first CSV drop
+- [ ] One-click "Forget this person" endpoint (`POST /api/candidates/:id/forget`) — Mongo doc + vector embeddings + Apollo cache deletion (GDPR/CCPA)
 - [ ] Pilot run: Peter exports a CSV for one open role; candidates appear in pipeline within 5 minutes
 
 ### Critical rule (from CLAUDE.md, repeated here)
-- **NEVER automate LinkedIn.** Manual CSV/1-Click export only. No browser extensions, no Playwright/Puppeteer, no scraping. Peter's Recruiter seat is the asset we cannot afford to lose.
+**NEVER automate LinkedIn.** Manual CSV/1-Click export only. No browser extensions, no Playwright/Puppeteer, no scraping. Peter's Recruiter seat is the asset we cannot afford to lose.
 
 ---
 
@@ -101,7 +108,7 @@ M365 wired up; Claude drafts outreach; Peter approves.
 - [ ] Inbound mail webhook → classify (positive / neutral / negative / OOO) via Haiku → summarize → attach to candidate/client
 - [ ] Voice corpus: 5-10 of Peter's real emails scrubbed of PII and stored in `knowledge/emails-voice-corpus/`
 - [ ] Outreach draft generator: Claude Sonnet using voice corpus + JD + prescreen questions
-- [ ] Outreach Queue UI: cards with subject + body + Approve / Edit / Reject
+- [ ] Outreach Queue UI (live data — mock UI already shipped Phase 1)
 - [ ] Slack/SMS ping when N drafts are pending
 - [ ] `outreach.plattpartners.com` subdomain DNS + SPF/DKIM/DMARC configured
 - [ ] **3-week sending warmup** on `outreach.plattpartners.com` (no real volume during weeks 8-11)
@@ -117,7 +124,7 @@ Peter chats with an expert on his own business. Public visitors can chat too, wi
 ### Deliverables
 - [ ] Vector DB chosen and provisioned (Pinecone free tier OR Atlas Vector Search — `ai-mgr` decides at phase kickoff)
 - [ ] Knowledge base seeded:
-  - `knowledge/wiki/` — business overview, brand voice, pricing, prescreen questions per vertical, ICP definitions
+  - `knowledge/wiki/` — business overview (done), brand voice (done), pricing (done), prescreen questions per vertical, ICP definitions
   - `knowledge/clients/` — one md per HR contact (template-driven)
   - `knowledge/placements/` — auto-generated as placements happen in Phase 2-3
 - [ ] Voyage-3-lite embeddings client with parent-document retrieval
@@ -125,7 +132,7 @@ Peter chats with an expert on his own business. Public visitors can chat too, wi
 - [ ] Public widget route: `/api/public/ask` (rate-limited, scope-filtered, no PII, daily $5 spend kill-switch)
 - [ ] Source-citation enforcement: every factual claim cites a chunk; post-response Haiku validator flags unsupported claims
 - [ ] Thumbs-up/down feedback widget; thumbs-down with note → nightly job appends correction to `knowledge/wiki/corrections/<date>.md` and re-indexes
-- [ ] Nightly eval: 30-50 Q/A pairs scored by Claude-as-judge against canonical answers; pass-rate tracked over time
+- [ ] Nightly eval: 18 Q/A pairs (currently in `eval/qa_pairs.jsonl`) scored by Claude-as-judge against canonical answers; pass-rate tracked over time
 - [ ] Public widget visible and working on every public marketing page
 
 ---
@@ -139,7 +146,7 @@ Net-new business. The second-biggest ask from the discovery meeting.
 - [ ] Signal scanners: Crunchbase, Greenhouse, Lever, news mentions, public job boards. Webhook-driven where source supports it; Heroku Scheduler polling otherwise.
 - [ ] Company-fit scoring against ICP definitions
 - [ ] Company-brief generator: one-page Sonnet brief covering company overview, why-they-fit, hiring-manager identity, and **3 specific candidates from Platt's pipeline** as leverage
-- [ ] BD Queue UI: Approve / Skip / Snooze on each brief
+- [ ] BD Queue UI: Approve / Skip / Snooze on each brief (placeholder UI already shipped)
 - [ ] On Approve: personalized outbound email via `outreach.plattpartners.com` (shares throttle pool with candidate outreach)
 - [ ] Throttled to 10-15 BD emails/day on top of candidate volume
 - [ ] First Peter-approved BD email lands in client inbox in week 16
@@ -171,7 +178,7 @@ These come from CLAUDE.md and Ryan's standing direction:
 3. **Never commit `.env`, candidate PII, or the voice corpus.** Always check `.gitignore`.
 4. **Always cite a source_id in AI responses.** If the assistant can't cite, it should say so.
 5. **Always update `docs/decisions.md`** when making an architectural choice.
-6. **Always run `pnpm verify-env` before committing.**
+6. **Always run `node scripts/verify-env.js`** before committing.
 7. **Marketing / tracking / website alignment is checked at every phase gate.** `project-manager` will not advance otherwise.
 8. **No financial-ops work** unless Ryan explicitly opens that scope.
 
@@ -194,7 +201,7 @@ These come from CLAUDE.md and Ryan's standing direction:
 | Domain renewal (annualized) | ~$1 |
 | **Total v1** | **~$33/mo** |
 
-Compare against Peter's $5K/mo retainer model — pays for itself in the first 4 hours of any month.
+**Current burn:** $7/mo (just the Heroku Basic dyno; nothing else live yet).
 
 ---
 
@@ -206,8 +213,8 @@ Compare against Peter's $5K/mo retainer model — pays for itself in the first 4
 | Apollo restricts/changes API | Throttle aggressively; track usage daily; fall back to manual enrichment if cut off |
 | M365 throttles outbound | 3-week warmup before real volume; daily-cap enforcement; NDR alerting |
 | Mongo Atlas hits 512MB | Alert at 400MB; archive cold data; upgrade to M2 ($9/mo) |
-| Heroku build sizes balloon | Monitor `heroku slug size`; tree-shake Tailwind; lazy-load shadcn components |
-| Peter loses LinkedIn seat (not from our automation, just account issues) | Sourcing pivots to job-board signals + referrals until restored |
+| Heroku build sizes balloon | Monitor `heroku slug size`; currently ~181MB |
+| Peter loses LinkedIn seat (account issues unrelated to our automation) | Sourcing pivots to job-board signals + referrals until restored |
 | Public widget abuse | Rate limit + token cap + daily kill-switch |
 | Vector DB choice locks us in | Both Pinecone and Atlas Vector Search export embeddings; switching cost is 1 day of indexing |
 
