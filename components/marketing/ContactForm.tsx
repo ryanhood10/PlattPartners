@@ -1,5 +1,8 @@
 import { useState, FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 type Status = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -53,58 +56,30 @@ export function ContactForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      <div>
-        <label htmlFor="name" className="mb-1.5 block text-sm font-medium">
-          Name
-        </label>
-        <input
+      <div className="space-y-1.5">
+        <Label htmlFor="name">Name</Label>
+        <Input
           id="name"
           name="name"
           type="text"
           required
           autoComplete="name"
           placeholder="First Last"
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         />
       </div>
       <div className="grid gap-4 md:grid-cols-2">
-        <div>
-          <label htmlFor="email" className="mb-1.5 block text-sm font-medium">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            autoComplete="email"
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          />
+        <div className="space-y-1.5">
+          <Label htmlFor="email">Email</Label>
+          <Input id="email" name="email" type="email" required autoComplete="email" />
         </div>
-        <div>
-          <label htmlFor="phone" className="mb-1.5 block text-sm font-medium">
-            Phone
-          </label>
-          <input
-            id="phone"
-            name="phone"
-            type="tel"
-            autoComplete="tel"
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          />
+        <div className="space-y-1.5">
+          <Label htmlFor="phone">Phone</Label>
+          <Input id="phone" name="phone" type="tel" autoComplete="tel" />
         </div>
       </div>
-      <div>
-        <label htmlFor="message" className="mb-1.5 block text-sm font-medium">
-          Tell us what you&apos;re looking for
-        </label>
-        <textarea
-          id="message"
-          name="message"
-          rows={4}
-          required
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        />
+      <div className="space-y-1.5">
+        <Label htmlFor="message">Tell us what you&apos;re looking for</Label>
+        <Textarea id="message" name="message" rows={4} required />
       </div>
       {errorMessage && (
         <p className="text-sm text-destructive" role="alert">
