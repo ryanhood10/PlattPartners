@@ -1,9 +1,9 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { SiteHeader } from '@/components/marketing/SiteHeader';
 import { SiteFooter } from '@/components/marketing/SiteFooter';
 import { ContactForm } from '@/components/marketing/ContactForm';
+import { TrustedBy } from '@/components/marketing/TrustedBy';
 import { SeoHead } from '@/components/marketing/SeoHead';
 import {
   graph,
@@ -59,19 +59,7 @@ export default function Home() {
         </section>
 
         {/* ─── Trusted By ────────────────────────────────────────────────── */}
-        <section className="border-y border-border bg-muted/30 py-12">
-          <div className="container">
-            <p className="mb-8 text-center font-display text-sm uppercase tracking-widest text-muted-foreground">
-              Trusted By
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-8 opacity-80">
-              <Image src="/clients/jitb.png" alt="Jack in the Box" width={120} height={48} className="h-10 w-auto md:h-12" />
-              <Image src="/clients/del-taco.png" alt="Del Taco" width={120} height={48} className="h-10 w-auto md:h-12" />
-              <Image src="/clients/el-pollo-loco.png" alt="El Pollo Loco" width={120} height={48} className="h-10 w-auto md:h-12" />
-              <Image src="/clients/petco.png" alt="Petco" width={120} height={48} className="h-10 w-auto md:h-12" />
-            </div>
-          </div>
-        </section>
+        <TrustedBy />
 
         {/* ─── Problem statement ─────────────────────────────────────────── */}
         <section className="container py-20">

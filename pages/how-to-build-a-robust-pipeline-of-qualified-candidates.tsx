@@ -4,6 +4,7 @@ import { Download, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SiteHeader } from '@/components/marketing/SiteHeader';
 import { SiteFooter } from '@/components/marketing/SiteFooter';
+import { TrustedBy } from '@/components/marketing/TrustedBy';
 import { SeoHead } from '@/components/marketing/SeoHead';
 import { graph, organizationNode, websiteNode, webPageNode, articleNode } from '@/lib/schema';
 
@@ -154,17 +155,7 @@ export default function PipelineGuidePage() {
         </section>
 
         {/* ─── Trusted By ────────────────────────────────────────────────── */}
-        <section className="container py-12">
-          <p className="text-center font-display text-sm uppercase tracking-widest text-muted-foreground">
-            Trusted By
-          </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-10 gap-y-8 opacity-80">
-            <Image src="/clients/jitb.png" alt="Jack in the Box" width={120} height={48} className="h-10 w-auto md:h-12" />
-            <Image src="/clients/del-taco.png" alt="Del Taco" width={120} height={48} className="h-10 w-auto md:h-12" />
-            <Image src="/clients/el-pollo-loco.png" alt="El Pollo Loco" width={120} height={48} className="h-10 w-auto md:h-12" />
-            <Image src="/clients/petco.png" alt="Petco" width={120} height={48} className="h-10 w-auto md:h-12" />
-          </div>
-        </section>
+        <TrustedBy background="transparent" />
 
         {/* ─── Benefits + final CTA ──────────────────────────────────────── */}
         <section className="border-t border-border bg-platt-secondary py-20 text-white">
