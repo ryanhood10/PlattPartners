@@ -121,6 +121,29 @@ Then check Atlas. Done.
 
 ---
 
+## Bonus — seed the cluster with the dashboard mock data
+
+There's a one-shot endpoint that populates Clients + Candidates + sample Contacts so the dashboard pages have real-looking data the moment you connect Atlas:
+
+```bash
+# Get the JOB_RUNNER_SECRET that's already set in Heroku
+heroku config:get JOB_RUNNER_SECRET -a platt-partners
+
+# Seed (refuses if collections already have data)
+curl -X POST \
+  -H "X-Job-Secret: <secret-from-above>" \
+  https://platt-partners-3b59df8c6202.herokuapp.com/api/jobs/seed
+
+# Wipe + re-seed (destructive — only use when you want a clean reset)
+curl -X POST \
+  -H "X-Job-Secret: <secret-from-above>" \
+  "https://platt-partners-3b59df8c6202.herokuapp.com/api/jobs/seed?reset=true"
+```
+
+The endpoint refuses to seed if any of `clients`, `candidates`, or `contacts` already has documents — pass `?reset=true` to override. Returns JSON with counts.
+
+---
+
 ## What this unlocks
 
 Once `MONGODB_URI` is set in Heroku:
