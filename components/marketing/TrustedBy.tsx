@@ -31,32 +31,15 @@ export function TrustedBy({ background = 'muted' }: Props) {
     background === 'muted' ? 'border-y border-border bg-muted/30' : 'border-y border-border';
 
   return (
-    <section className={`${bgClass} py-12`}>
+    <section className={`${bgClass} py-10`}>
       <div className="container">
-        <p className="mb-10 text-center font-display text-sm uppercase tracking-widest text-platt-secondary">
-          Trusted By:
+        <p className="mb-6 text-center font-display text-sm uppercase tracking-widest text-muted-foreground">
+          Trusted By
         </p>
 
         {/* Row 1 — restaurants */}
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-10 gap-y-8 md:gap-x-16">
+        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-x-10 gap-y-5 opacity-80">
           {RESTAURANTS.map((logo) => (
-            <Image
-              key={logo.src}
-              src={logo.src}
-              alt={logo.alt}
-              width={160}
-              height={64}
-              className="h-10 w-auto object-contain md:h-12"
-            />
-          ))}
-        </div>
-
-        {/* Divider */}
-        <div className="mx-auto my-8 max-w-3xl border-t border-border/70" />
-
-        {/* Row 2 — tech and other */}
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-10 gap-y-8 md:gap-x-14">
-          {TECH_AND_OTHER.map((logo) => (
             <Image
               key={logo.src}
               src={logo.src}
@@ -64,6 +47,23 @@ export function TrustedBy({ background = 'muted' }: Props) {
               width={140}
               height={56}
               className="h-8 w-auto object-contain md:h-10"
+            />
+          ))}
+        </div>
+
+        {/* Subtle divider */}
+        <div className="mx-auto my-5 max-w-3xl border-t border-border/50" />
+
+        {/* Row 2 — tech and other */}
+        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-x-10 gap-y-5 opacity-80">
+          {TECH_AND_OTHER.map((logo) => (
+            <Image
+              key={logo.src}
+              src={logo.src}
+              alt={logo.alt}
+              width={120}
+              height={48}
+              className="h-7 w-auto object-contain md:h-9"
             />
           ))}
         </div>
