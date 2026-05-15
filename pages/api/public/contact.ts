@@ -1,6 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { connectMongo } from '@/lib/db';
+import { Contact } from '@/models';
 
 const contactSchema = z.object({
   name: z.string().min(1).max(100),
@@ -12,6 +15,14 @@ const contactSchema = z.object({
 type ApiResponse =
   | { ok: true; data: { received: true } }
   | { ok: false; error: { code: string; message: string } };
+
+function hashIp(req: NextApiRequest): string | undefined {
+  const fwd = req.headers['x-forwarded-for'];
+  const raw =
+    (Array.isArray(fwd) ? fwd[0] : fwd?.split(',')[0])?.trim() ?? req.socket?.remoteAddress ?? '';
+  if (!raw) return undefined;
+  return createHash('sha256').update(raw).digest('hex').slice(0, 16);
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   if (req.method !== 'POST') {
@@ -29,14 +40,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     });
   }
 
-  // Phase 0: log the submission. Phase 1 wires this to a Mongo Contact collection
-  // and pings Peter via M365 once auth is up.
+  const ipHash = hashIp(req);
+  const userAgent = req.headers['user-agent'];
+
+  // Persist to Mongo when configured. Otherwise just log — Peter still gets
+  // the submission via Heroku logs until Atlas is wired up.
+  let stored = false;
+  if (process.env.MONGODB_URI) {
+    try {
+      await connectMongo();
+      await Contact.create({
+        name: parsed.data.name,
+        email: parsed.data.email,
+        phone: parsed.data.phone || undefined,
+        message: parsed.data.message,
+        ip_hash: ipHash,
+        user_agent: userAgent,
+      });
+      stored = true;
+    } catch (err) {
+      logger.error(
+        { err },
+        'Failed to write contact submission to Mongo — falling back to log only'
+      );
+    }
+  }
+
   logger.info(
     {
-      name: parsed.data.name,
+      stored,
       emailDomain: parsed.data.email.split('@')[1],
       hasPhone: Boolean(parsed.data.phone),
       messageLen: parsed.data.message.length,
+      ipHash,
     },
     'Public contact form submission'
   );
