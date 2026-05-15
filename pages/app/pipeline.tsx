@@ -1,7 +1,10 @@
+import { useState, useMemo } from 'react';
 import Head from 'next/head';
-import { Upload } from 'lucide-react';
+import { Upload, Search } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { requireAuth } from '@/lib/auth';
 import { MOCK_CANDIDATES } from '@/lib/mock';
 import type { PipelineStage } from '@/models/PipelineState';
@@ -24,9 +27,23 @@ function scoreColor(score: number) {
 }
 
 export default function PipelinePage() {
+  const [query, setQuery] = useState('');
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return MOCK_CANDIDATES;
+    const q = query.toLowerCase();
+    return MOCK_CANDIDATES.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.title.toLowerCase().includes(q) ||
+        c.company.toLowerCase().includes(q) ||
+        c.tags.some((t) => t.toLowerCase().includes(q))
+    );
+  }, [query]);
+
   const byStage = new Map<PipelineStage, typeof MOCK_CANDIDATES>();
   for (const s of STAGES) byStage.set(s.key, []);
-  for (const c of MOCK_CANDIDATES) {
+  for (const c of filtered) {
     byStage.get(c.stage)?.push(c);
   }
 
@@ -37,16 +54,23 @@ export default function PipelinePage() {
       </Head>
       <DashboardLayout
         title="Pipeline"
-        description="Candidates across every stage of every active search."
+        description={`${filtered.length} of ${MOCK_CANDIDATES.length} candidates across every stage`}
       >
         <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-900">
           <strong>Mock data.</strong> Connect MongoDB Atlas to see real candidates here.
         </div>
 
-        <div className="mb-6 flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Drop a LinkedIn Recruiter CSV in your OneDrive folder to start the pipeline.
-          </p>
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative max-w-md flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by name, title, company, or tag…"
+              className="pl-9"
+            />
+          </div>
           <Button disabled>
             <Upload className="mr-2 h-4 w-4" />
             Connect OneDrive
@@ -62,9 +86,9 @@ export default function PipelinePage() {
                   <h3 className="font-display text-xs uppercase tracking-wider text-muted-foreground">
                     {stage.label}
                   </h3>
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                  <Badge variant="secondary" className="text-[10px]">
                     {candidates.length}
-                  </span>
+                  </Badge>
                 </div>
                 <div className="space-y-2 p-2">
                   {candidates.length === 0 ? (
@@ -108,6 +132,15 @@ export default function PipelinePage() {
             );
           })}
         </div>
+
+        {filtered.length === 0 && (
+          <div className="mt-6 rounded-lg border border-dashed border-border bg-muted/10 p-12 text-center">
+            <p className="text-sm text-muted-foreground">
+              No candidates match &ldquo;{query}&rdquo;. Clear the search to see all{' '}
+              {MOCK_CANDIDATES.length}.
+            </p>
+          </div>
+        )}
       </DashboardLayout>
     </>
   );
