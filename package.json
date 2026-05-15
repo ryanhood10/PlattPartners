@@ -15,6 +15,7 @@
     "verify-env": "node scripts/verify-env.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.96.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-select": "^2.2.6",
