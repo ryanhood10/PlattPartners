@@ -1,28 +1,36 @@
-import Head from 'next/head';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { SiteHeader } from '@/components/marketing/SiteHeader';
 import { SiteFooter } from '@/components/marketing/SiteFooter';
 import { ContactForm } from '@/components/marketing/ContactForm';
+import { SeoHead } from '@/components/marketing/SeoHead';
+import {
+  graph,
+  organizationNode,
+  websiteNode,
+  webPageNode,
+  professionalServiceNode,
+} from '@/lib/schema';
+
+const TITLE = 'Recruiting for Fast Growing Companies — Platt Partners';
+const DESCRIPTION =
+  'Build a robust pipeline of qualified candidates for hard-to-fill positions. Serving the tech, finance, and fast casual dining industries.';
 
 export default function Home() {
   return (
     <>
-      <Head>
-        <title>Recruiting for Fast Growing Companies — Platt Partners</title>
-        <meta
-          name="description"
-          content="Build a robust pipeline of qualified candidates for hard-to-fill positions. Serving the tech, finance, and fast casual dining industries."
-        />
-        <meta property="og:title" content="Platt Partners — Quality Candidate Flow" />
-        <meta
-          property="og:description"
-          content="We won't find one great candidate. We'll find several."
-        />
-        <meta property="og:url" content="https://plattpartners.com/" />
-        <meta property="og:type" content="website" />
-      </Head>
+      <SeoHead
+        title={TITLE}
+        description={DESCRIPTION}
+        path="/"
+        schema={graph(
+          organizationNode(),
+          websiteNode(),
+          professionalServiceNode(),
+          webPageNode({ path: '/', title: TITLE, description: DESCRIPTION })
+        )}
+      />
 
       <SiteHeader />
 

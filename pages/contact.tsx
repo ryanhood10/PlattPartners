@@ -1,19 +1,27 @@
-import Head from 'next/head';
 import { Mail, Phone, Linkedin } from 'lucide-react';
 import { SiteHeader } from '@/components/marketing/SiteHeader';
 import { SiteFooter } from '@/components/marketing/SiteFooter';
 import { ContactForm } from '@/components/marketing/ContactForm';
+import { SeoHead } from '@/components/marketing/SeoHead';
+import { graph, organizationNode, websiteNode, webPageNode } from '@/lib/schema';
+
+const TITLE = 'Contact — Platt Partners';
+const DESCRIPTION =
+  "Tell us what you're looking for and we'll call you to get started building your candidate pipeline.";
 
 export default function ContactPage() {
   return (
     <>
-      <Head>
-        <title>Contact — Platt Partners</title>
-        <meta
-          name="description"
-          content="Tell us what you're looking for and we'll call you to get started building your candidate pipeline."
-        />
-      </Head>
+      <SeoHead
+        title={TITLE}
+        description={DESCRIPTION}
+        path="/contact"
+        schema={graph(
+          organizationNode(),
+          websiteNode(),
+          webPageNode({ path: '/contact', title: TITLE, description: DESCRIPTION })
+        )}
+      />
 
       <SiteHeader />
 

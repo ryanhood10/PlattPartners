@@ -1,21 +1,36 @@
-import Head from 'next/head';
 import Link from 'next/link';
 import { Clock, Users, Cpu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SiteHeader } from '@/components/marketing/SiteHeader';
 import { SiteFooter } from '@/components/marketing/SiteFooter';
 import { ContactForm } from '@/components/marketing/ContactForm';
+import { SeoHead } from '@/components/marketing/SeoHead';
+import {
+  graph,
+  organizationNode,
+  websiteNode,
+  webPageNode,
+  professionalServiceNode,
+} from '@/lib/schema';
+
+const TITLE = 'Technology Recruiting — Platt Partners';
+const DESCRIPTION =
+  'Quality candidate flow for hard-to-fill tech positions. Quick integration, high-touch engagement, and recruiting automation that delivers.';
 
 export default function TechnologyPage() {
   return (
     <>
-      <Head>
-        <title>Technology Recruiting — Platt Partners</title>
-        <meta
-          name="description"
-          content="Quality candidate flow for hard-to-fill tech positions. Quick integration, high-touch engagement, and recruiting automation that delivers."
-        />
-      </Head>
+      <SeoHead
+        title={TITLE}
+        description={DESCRIPTION}
+        path="/technology"
+        schema={graph(
+          organizationNode(),
+          websiteNode(),
+          professionalServiceNode(),
+          webPageNode({ path: '/technology', title: TITLE, description: DESCRIPTION })
+        )}
+      />
 
       <SiteHeader />
 

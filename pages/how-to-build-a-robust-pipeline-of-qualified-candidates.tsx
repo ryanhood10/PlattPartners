@@ -1,31 +1,41 @@
-import Head from 'next/head';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Download, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SiteHeader } from '@/components/marketing/SiteHeader';
 import { SiteFooter } from '@/components/marketing/SiteFooter';
+import { SeoHead } from '@/components/marketing/SeoHead';
+import { graph, organizationNode, websiteNode, webPageNode, articleNode } from '@/lib/schema';
 
 // Faithful rebuild of the landing page at the EXACT same URL as the current WP site
 // (/how-to-build-a-robust-pipeline-of-qualified-candidates) so we preserve any
 // Google ranking for that long-tail informational query. URL stays verbatim
 // intentionally — do not "clean it up" without a 301.
 
+const PATH = '/how-to-build-a-robust-pipeline-of-qualified-candidates';
+const TITLE = 'How to build a robust pipeline of qualified candidates — Platt Partners';
+const DESCRIPTION =
+  'Free guide: 3 Outbound Recruiting Pro Tips That Can Save You Time And Money. Stop combing through LinkedIn — let us deliver a full pipeline in days, not weeks.';
+
 export default function PipelineGuidePage() {
   return (
     <>
-      <Head>
-        <title>How to build a robust pipeline of qualified candidates — Platt Partners</title>
-        <meta
-          name="description"
-          content="Free guide: 3 Outbound Recruiting Pro Tips That Can Save You Time And Money. Stop combing through LinkedIn — let us deliver a full pipeline in days, not weeks."
-        />
-        <meta property="og:title" content="Build a robust candidate pipeline — Platt Partners" />
-        <meta
-          property="og:description"
-          content="Download our free guide: 3 Outbound Recruiting Pro Tips That Can Save You Time And Money."
-        />
-      </Head>
+      <SeoHead
+        title={TITLE}
+        description={DESCRIPTION}
+        path={PATH}
+        schema={graph(
+          organizationNode(),
+          websiteNode(),
+          webPageNode({ path: PATH, title: TITLE, description: DESCRIPTION }),
+          articleNode({
+            path: PATH,
+            headline: 'How to build a robust pipeline of qualified candidates',
+            description: DESCRIPTION,
+            datePublished: '2021-04-01',
+          })
+        )}
+      />
 
       <SiteHeader />
 

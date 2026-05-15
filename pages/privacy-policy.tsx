@@ -1,15 +1,25 @@
-import Head from 'next/head';
 import { SiteHeader } from '@/components/marketing/SiteHeader';
 import { SiteFooter } from '@/components/marketing/SiteFooter';
+import { SeoHead } from '@/components/marketing/SeoHead';
+import { graph, organizationNode, websiteNode, webPageNode } from '@/lib/schema';
+
+const TITLE = 'Privacy Policy — Platt Partners';
+const DESCRIPTION = 'How Platt Partners handles your personal information.';
 
 export default function PrivacyPolicyPage() {
   return (
     <>
-      <Head>
-        <title>Privacy Policy — Platt Partners</title>
-        <meta name="description" content="How Platt Partners handles your personal information." />
-        <meta name="robots" content="noindex" />
-      </Head>
+      <SeoHead
+        title={TITLE}
+        description={DESCRIPTION}
+        path="/privacy-policy"
+        noindex
+        schema={graph(
+          organizationNode(),
+          websiteNode(),
+          webPageNode({ path: '/privacy-policy', title: TITLE, description: DESCRIPTION })
+        )}
+      />
 
       <SiteHeader />
 

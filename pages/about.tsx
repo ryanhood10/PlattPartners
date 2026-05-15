@@ -1,19 +1,32 @@
-import Head from 'next/head';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { SiteHeader } from '@/components/marketing/SiteHeader';
 import { SiteFooter } from '@/components/marketing/SiteFooter';
+import { SeoHead } from '@/components/marketing/SeoHead';
+import { graph, organizationNode, websiteNode, webPageNode, personNode } from '@/lib/schema';
+
+const TITLE = 'About — Platt Partners';
+const DESCRIPTION =
+  'Peter Platt has 25+ years of recruiting experience, delivering top-tier talent for hard-to-fill positions across tech, finance, and fast casual dining.';
 
 export default function AboutPage() {
   return (
     <>
-      <Head>
-        <title>About — Platt Partners</title>
-        <meta
-          name="description"
-          content="Peter Platt has 25+ years of recruiting experience, delivering top-tier talent for hard-to-fill positions across tech, finance, and fast casual dining."
-        />
-      </Head>
+      <SeoHead
+        title={TITLE}
+        description={DESCRIPTION}
+        path="/about"
+        schema={graph(
+          organizationNode(),
+          websiteNode(),
+          webPageNode({ path: '/about', title: TITLE, description: DESCRIPTION }),
+          personNode({
+            name: 'Peter Platt',
+            title: 'Founder, Platt Partners',
+            linkedin: 'https://www.linkedin.com/in/peterplatt/',
+          })
+        )}
+      />
 
       <SiteHeader />
 
