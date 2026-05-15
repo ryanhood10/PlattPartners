@@ -147,18 +147,33 @@ If a decision is reversed later, append a new entry referencing the old one — 
 
 ---
 
-## 2026-05-15 — Ship the AI assistant with context-stuffing, defer the vector DB
+## 2026-05-15 — Context-stuffing is INTERIM only; proper RAG remains the Phase 4 target
 
-**Decision:** The internal assistant at `/app/assistant` works today by stuffing the entire `knowledge/wiki/` + `knowledge/brand/` markdown corpus (~10K tokens) into Claude Sonnet 4.6's system prompt on every call. Anthropic prompt caching makes this cheap (~$0.005/call after the first). No Pinecone or Atlas Vector Search yet.
+**Decision:** The interim context-stuffing implementation in `lib/knowledge.ts` is acknowledged as a short-term scaffold to ship the chat UX, not the long-term Jarvis architecture. Phase 4 still ships proper RAG (vector embeddings + retrieval per question) as the docs/build_plan.md spec requires.
 
-**Alternatives considered:**
-- **Build RAG now (Pinecone + Voyage embeddings)** — the original Phase 4 plan. Rejected because: (a) the corpus fits in the context window 8x over today, (b) every chunk-retrieval system loses some answer quality versus full-context, (c) it adds an external vendor + an indexing pipeline + a re-embed-on-change flow to maintain. Premature complexity for our scale.
-- **Build a custom file-based retrieval over markdown** — keyword search across the wiki files. Rejected — Claude with full context is strictly better at understanding intent than keyword match.
-
-**Rationale:** Context-stuffing is the right tool when the corpus is small. Claude's 200K window + prompt caching makes it economical. The threshold to revisit is ~100K-token corpus OR per-call latency >3 seconds OR per-call cost >$0.10. None of those is close.
+**What changed from earlier today:**
+- Earlier the same day, I logged a decision claiming "context-stuffing IS the v1, defer RAG" — reading like a permanent simplification. Ryan corrected: that's not the plan. The build plan still calls for RAG; the context-stuffing is just a stopgap so the chat works while we set up the vector store.
+- The earlier entry is reversed by this one. Treat this as the canonical position.
 
 **Approved by:** Ryan, 2026-05-15
-**Reversible?:** Yes — when we add RAG later, the assistant interface (`/api/assistant/ask`) doesn't change; only the system-prompt-building strategy in `lib/knowledge.ts` does. No client-side migration.
+**Reversible?:** N/A — this is the correction to the previous entry. The actual RAG work is tracked in `docs/build_plan.md` Phase 4.
+
+### What "Jarvis" looks like at full build (per the build plan)
+
+Two knowledge surfaces, same engine:
+1. **Static-corpus RAG** — chunks of `knowledge/wiki/`, `knowledge/brand/`, `knowledge/clients/`, `knowledge/placements/` embedded with Voyage-3-lite, stored in Pinecone or Atlas Vector Search. Retrieved per question with source-id citation.
+2. **Live-data tool calls** — Jarvis can call `find_candidates`, `find_clients`, `find_pipeline`, `find_outreach_drafts`, `find_emails`, etc. via Claude tool use. Answers questions like "which Friday-call clients haven't been touched in 30 days?"
+
+Until both surfaces are live, Jarvis is partial.
+
+---
+
+## 2026-05-15 — Internal assistant is named "Jarvis"
+
+**Decision:** The AI assistant is named Jarvis in all user-facing copy. Route stays `/app/assistant` (function-based naming); UI calls it Jarvis.
+
+**Approved by:** Ryan, 2026-05-15
+**Reversible?:** Yes (light search-and-replace).
 
 ---
 

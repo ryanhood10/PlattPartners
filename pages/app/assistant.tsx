@@ -87,10 +87,10 @@ export default function AssistantPage() {
   return (
     <>
       <Head>
-        <title>Assistant — Platt Partners</title>
+        <title>Jarvis — Platt Partners</title>
       </Head>
       <DashboardLayout
-        title="Assistant"
+        title="Jarvis"
         description="Your AI expert on Platt Partners — clients, candidates, voice, strategy."
       >
         <div className="mx-auto flex h-[calc(100vh-9rem)] max-w-3xl flex-col">
@@ -100,11 +100,12 @@ export default function AssistantPage() {
               <div className="rounded-lg border border-dashed border-border bg-muted/10 p-8">
                 <Sparkles className="h-8 w-8 text-platt-primary" />
                 <h3 className="mt-3 font-display text-xl text-platt-secondary">
-                  Ask me anything about Platt Partners
+                  Hi Peter — I&apos;m Jarvis. Ask me anything about Platt Partners.
                 </h3>
                 <p className="mt-2 text-sm text-muted-foreground">
                   I have your wiki, brand voice, pricing, prescreen questions, and strategy
-                  notes loaded as context. I cite sources so you can verify.
+                  notes available. I cite sources so you can verify. Live data from your
+                  candidate + client pipeline is coming next (see Phase 4 in the build plan).
                 </p>
                 <div className="mt-6 space-y-2">
                   <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -140,7 +141,7 @@ export default function AssistantPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-medium text-muted-foreground">
-                      {m.role === 'user' ? 'You' : 'Assistant'}
+                      {m.role === 'user' ? 'You' : 'Jarvis'}
                     </p>
                     <div className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">
                       {m.content}

@@ -1,11 +1,17 @@
+// ⚠️ INTERIM — this is the v1 implementation. The proper Jarvis architecture
+// uses RAG (vector embeddings + retrieval) per docs/build_plan.md Phase 4.
+// Replace this file's loadKnowledgeCorpus + buildAssistantSystemPrompt with
+// a retrieval-based version once Voyage embeddings + the vector store are
+// wired up. The API contract in pages/api/assistant/ask.ts doesn't change —
+// only how the system prompt is assembled.
+//
+// Why interim and not the real thing yet: the proper implementation needs an
+// Anthropic API key + a vector-store provider (Pinecone or Atlas Vector
+// Search) which require account-creation steps from Ryan. Context-stuffing
+// lets us demo the UX while those are pending.
+//
 // Loads every markdown file in knowledge/wiki/ and knowledge/brand/ into a
 // single corpus string that gets stuffed into the assistant's system prompt.
-//
-// Why "context stuffing" not RAG (yet):
-// The knowledge base is ~10K tokens total today. Claude Sonnet 4.6 has a
-// 200K context window. We can afford to include everything verbatim and
-// skip the vector-search complexity until the corpus grows past ~100K tokens
-// or per-call latency starts to matter. See docs/decisions.md.
 //
 // We cache the corpus per-process. Heroku dynos restart frequently enough
 // (~daily for free, hourly during deploys) that file changes are picked up
@@ -89,9 +95,9 @@ export function loadKnowledgeCorpus(): { text: string; estimatedTokens: number }
 
 export function buildAssistantSystemPrompt(): string {
   const { text: corpus } = loadKnowledgeCorpus();
-  return `You are Peter Platt's AI expert on Platt Partners — a recruiting firm specializing in mid- to senior-level placements in restaurant operations, technology, and finance.
+  return `You are **Jarvis**, Peter Platt's AI expert on Platt Partners — a recruiting firm specializing in mid- to senior-level placements in restaurant operations, technology, and finance.
 
-Your job is to help Peter answer questions about his own business: clients, services, brand voice, processes, prescreen questions, ICP strategy, and operational details. You are an internal tool — Peter is the only user.
+Your job is to help Peter answer questions about his own business: clients, services, brand voice, processes, prescreen questions, ICP strategy, and operational details. You are an internal tool — Peter is the only user. Refer to yourself as Jarvis when introducing yourself.
 
 RULES (these are non-negotiable):
 1. Answer ONLY from the knowledge base below. If a fact is not in the knowledge base, say "I don't have that in my knowledge base" — do not guess and do not invent.

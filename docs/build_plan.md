@@ -117,23 +117,59 @@ M365 wired up; Claude drafts outreach; Peter approves.
 
 ---
 
-## Phase 4 — AI assistant (Weeks 10-14, overlaps with Phase 3)
+## Phase 4 — Jarvis: the AI assistant (Weeks 10-14, overlaps with Phase 3)
 
-Peter chats with an expert on his own business. Public visitors can chat too, with guardrails.
+**Jarvis** is Peter's AI expert on his own business. He's the centerpiece of the dashboard — the thing Peter opens first every morning. Two audiences, same engine:
 
-### Deliverables
-- [ ] Vector DB chosen and provisioned (Pinecone free tier OR Atlas Vector Search — `ai-mgr` decides at phase kickoff)
-- [ ] Knowledge base seeded:
-  - `knowledge/wiki/` — business overview (done), brand voice (done), pricing (done), prescreen questions per vertical, ICP definitions
-  - `knowledge/clients/` — one md per HR contact (template-driven)
-  - `knowledge/placements/` — auto-generated as placements happen in Phase 2-3
-- [ ] Voyage-3-lite embeddings client with parent-document retrieval
-- [ ] Internal assistant route: `/api/assistant/ask` (auth-walled, full scope, can take actions)
-- [ ] Public widget route: `/api/public/ask` (rate-limited, scope-filtered, no PII, daily $5 spend kill-switch)
-- [ ] Source-citation enforcement: every factual claim cites a chunk; post-response Haiku validator flags unsupported claims
+1. **Internal Jarvis** (auth-walled, full scope): answers any question about Peter's business and can take actions on his behalf
+2. **Public Jarvis** (scope-filtered, rate-limited): answers visitor questions on plattpartners.com — no PII, no internal data
+
+### What Jarvis must know (knowledge layers)
+
+| Layer | Source | Access pattern |
+|---|---|---|
+| **Static knowledge** | `knowledge/wiki/`, `knowledge/brand/`, `knowledge/clients/`, `knowledge/placements/` | RAG — chunked, embedded, retrieved per question |
+| **Live business data** | Mongo collections: Candidate, Client, Job, PipelineState, OutreachDraft, EmailMeta | Tool calling — Jarvis decides which collection to query |
+| **Voice corpus** | `knowledge/emails-voice-corpus/` (PII-scrubbed) | RAG — used only for voice/tone matching, never as factual ground truth |
+| **Recent actions** | `assistant_logs` Mongo collection | Conversation memory; lets Peter say "draft another like the one we sent yesterday" |
+
+### Deliverables — RAG layer
+- [ ] Vector DB chosen + provisioned (Pinecone free tier OR Atlas Vector Search — `ai-mgr` decides at phase kickoff)
+- [ ] Voyage-3-lite embeddings client (`lib/services/voyage.ts`)
+- [ ] Chunking strategy: 512 tokens with 64-token overlap, parent-document retrieval (embed small chunks, return surrounding section to Claude)
+- [ ] Indexing pipeline: re-embed when files in `knowledge/` change; nightly drift check
+- [ ] Replaces the current interim context-stuffing in `lib/knowledge.ts`
+- [ ] Source-citation enforcement: every factual claim cites a chunk's `source_id`; post-response Haiku validator flags unsupported claims
+
+### Deliverables — Tool calling over live data
+- [ ] Tool definitions for each Mongo collection Jarvis can query:
+  - `find_candidates({ query?, stage?, score_gte?, vertical?, limit? })`
+  - `find_clients({ query?, tier?, vertical?, friday_call_list?, limit? })`
+  - `find_jobs({ client_id?, status?, vertical?, limit? })`
+  - `get_pipeline_state({ candidate_id?, job_id? })`
+  - `find_outreach_drafts({ status?, candidate_id?, limit? })`
+  - `find_emails({ candidate_id?, classification?, since?, limit? })`
+- [ ] Claude Agent SDK orchestration: Jarvis decides which tool to call based on the question; multi-step reasoning across tool calls
+- [ ] Per-tool authorization scope (e.g., public Jarvis cannot call any of these)
+- [ ] Tool-call result caching where idempotent
+
+### Deliverables — Memory + feedback
+- [ ] `assistant_logs` Mongo collection: every Jarvis turn persisted (question, retrieved chunks, tool calls, response, sources cited)
+- [ ] Conversation memory: multi-turn within a session; reference past turns explicitly
 - [ ] Thumbs-up/down feedback widget; thumbs-down with note → nightly job appends correction to `knowledge/wiki/corrections/<date>.md` and re-indexes
 - [ ] Nightly eval: 18 Q/A pairs (currently in `eval/qa_pairs.jsonl`) scored by Claude-as-judge against canonical answers; pass-rate tracked over time
-- [ ] Public widget visible and working on every public marketing page
+
+### Deliverables — Public Jarvis
+- [ ] Public widget route: `/api/public/ask` (rate-limited via Upstash, scope-filtered to `internal_only=false` AND `trust_level >= 2`, no PII, daily $5 spend kill-switch)
+- [ ] Public widget React component visible on every public marketing page
+- [ ] System prompt with hard rule: never reveal internal-only chunks or invent business facts
+- [ ] CORS allowlist for plattpartners.com only
+
+### Status today
+- ✅ Internal Jarvis UI shipped at `/app/assistant` with interim context-stuffing
+- ✅ Cost-tracking + prompt-caching wired
+- ✅ Chat interface (suggested prompts, history, error handling) working
+- ⏳ Everything in the "RAG layer", "Tool calling", "Memory + feedback", and "Public Jarvis" sections above is still to do
 
 ---
 

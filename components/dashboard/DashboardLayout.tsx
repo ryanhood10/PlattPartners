@@ -26,7 +26,7 @@ const NAV_ITEMS = [
   { href: '/app/outreach', label: 'Outreach Queue', icon: Send },
   { href: '/app/bd', label: 'BD Queue', icon: Target },
   { href: '/app/analytics', label: 'Analytics', icon: BarChart3 },
-  { href: '/app/assistant', label: 'Assistant', icon: Sparkles },
+  { href: '/app/assistant', label: 'Jarvis', icon: Sparkles },
   { href: '/app/settings', label: 'Settings', icon: Settings },
 ] as const;
 
